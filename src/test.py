@@ -2,16 +2,22 @@
 # -*- coding: utf-8 -*-
 
 import rospy
-from tf import TransformListener
-
+from tf2_msgs.msg import TFMessage
 rospy.init_node('test')
 
 #座標を持ってくる
-tf = TransformListener()
-position, rotation = tf.lookupTransform("/map", "/base_link", rospy.Time(0))
-pose_x = position[0]
-pose_y = position[1]
-pose_z = rotation[2]
-pose_w = rotation[3]
+class tf():
+    def __init__(self):
+        rospy.Subscriber('/tf', TFMessage, self.tfCB)
 
-print pose_x, pose_y, pose_z, pose_w
+    def tfCB(self, msg):
+        pose_x = msg.transforms
+        #pose_y = msg.transforms.translation.y
+        #pose_z = msg.transforms.rotation.z
+        #pose_w = msg.transforms.rotation.w
+        print pose_x
+
+if __name__ == '__main__':
+    rospy.init_node('test')
+    tf = tf()
+    rospy.spin()
