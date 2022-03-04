@@ -8,6 +8,7 @@
 #-------------------------------------
 
 import rospy
+import rosparam
 import actionlib
 from std_msgs.msg import Float64
 from std_srvs.srv import Empty
@@ -28,14 +29,15 @@ class RealTimeNaviServer():
         # Value
         self.tf = TransformListener()
         self.location_list = []
+        self.realtime_location = []
 
     def checkState(self, srv_req):
         if srv_req.state == 'set':
             rospy.loginfo("Set location")
-            return RealTimeNaviResponse(result = self.set_location())
+            return self.set_location()
         elif srv_req.state == 'navigation':
             rospy.loginfo("Executing Navigation")
-            return RealTimeNaviResponse(result = self.navigation())
+            return self.navigation()
         else:
             rospy.logger("<" + srv_req.state + "> state doesn't exist.")
             return RealTimeNaviResponse(result = False)
@@ -43,18 +45,21 @@ class RealTimeNaviServer():
     def set_location(self):
         position, rotation = self.tf.lookupTransform("/map", "/base_link", rospy.Time(0))
         self.location_list = [position[0], position[1], rotation[2], rotation[3]]
+        rospy.set_param('/realtime_location', self.location_list)
         print self.location_list
         return RealTimeNaviResponse(result = True)
 
-    def navigation(self, location_list):
+    def navigation(self):
+        # get realtime_location
+        self.realtime_location = rosparam.get_param('realtime_location')
         # set goal_pose
         goal = MoveBaseGoal()
         goal.target_pose.header.frame_id = 'map'
         goal.target_pose.header.stamp = rospy.Time.now()
-        goal.target_pose.pose.position.x = location_list[0]
-        goal.target_pose.pose.position.y = location_list[1]
-        goal.target_pose.pose.orientation.z = location_list[2]
-        goal.target_pose.pose.orientation.w = location_list[3]
+        goal.target_pose.pose.position.x = self.realtime_location[0]
+        goal.target_pose.pose.position.y = self.realtime_location[1]
+        goal.target_pose.pose.orientation.z = self.realtime_location[2]
+        goal.target_pose.pose.orientation.w = self.realtime_location[3]
         # clearing costmap
         rospy.loginfo("Clearing costmap...")
         rospy.wait_for_service('move_base/clear_costmaps')
