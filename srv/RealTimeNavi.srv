@@ -1,5 +1,5 @@
 # req
-string data
+string state
 ---
 # res
 bool result
