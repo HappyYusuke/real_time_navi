@@ -1,5 +1,6 @@
 # req
 string state
+string location_name
 ---
 # res
 bool result
